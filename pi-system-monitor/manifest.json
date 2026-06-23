@@ -1,0 +1,288 @@
+{
+  "id": "pi-system-monitor",
+  "name": "Pi System Monitor",
+  "version": "1.1.0",
+  "description": "Raspberry Pi 4 dashboard: CPU/RAM/disk/temp with sparklines, FanHat, network adapters, VLESS & SOCKS5 proxy status, and configurable ping targets. Each module shows one metric — place freely on your layout.",
+  "author": "custom",
+  "license": "MIT",
+  "minAppVersion": "0.20.0",
+  "moduleType": "pi-system-monitor",
+  "category": "System",
+  "icon": "Activity",
+
+  "defaultConfig": {
+    "metric": "overview",
+    "displayType": "auto",
+    "title": "",
+    "language": "auto",
+    "iconType": "builtin",
+    "emoji": "",
+    "builtinIcon": "auto",
+    "showLabel": true,
+    "fontFamily": "inherit",
+    "customFont": "",
+    "fontSize": 0,
+    "accentColor": "#38bdf8",
+    "refreshMs": 4000,
+    "apiBaseUrl": "",
+    "warnThreshold": 0,
+    "critThreshold": 0,
+    "connectionName": "",
+    "showPort": true,
+    "showClientCount": true,
+    "showListening": true,
+    "showMac": true,
+    "showIpv6": false,
+    "showSparkline": true,
+    "sparklinePoints": 30,
+    "pingTargets": "Cloudflare | 1.1.1.1\nGoogle | 8.8.8.8\nYandex | ya.ru",
+    "pingWarnMs": 150,
+    "pingCritMs": 500
+  },
+
+  "defaultSize": { "w": 260, "h": 160 },
+
+  "defaultStyle": {
+    "padding": 12,
+    "fontSize": 18,
+    "backgroundColor": "rgba(0,0,0,0.4)",
+    "borderRadius": 14
+  },
+
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "metric": {
+        "type": "string",
+        "title": "What to show",
+        "description": "Which parameter this module displays. Add one module per metric.",
+        "enum": ["overview", "cpu", "ram", "disk", "temp", "fan", "adapters", "external_ip", "vless", "socks5", "ping", "uptime"],
+        "enumLabels": ["Overview (compact)", "CPU load", "RAM", "Disk", "CPU temperature", "FanHat (status + PWM%)", "Network adapters", "External IP", "VLESS proxy", "SOCKS5 proxy", "Ping targets", "Uptime"],
+        "ui:widget": "select",
+        "ui:group": "Content"
+      },
+      "displayType": {
+        "type": "string",
+        "title": "Display type",
+        "description": "Visual style for numeric metrics. 'Auto' picks the best style.",
+        "enum": ["auto", "value", "bar", "gauge", "badge"],
+        "enumLabels": ["Auto", "Big value", "Progress bar", "Gauge (ring)", "Badge / dot"],
+        "ui:widget": "select",
+        "ui:group": "Content"
+      },
+      "showSparkline": {
+        "type": "boolean",
+        "title": "Show sparkline history",
+        "description": "Mini chart of the last N readings (CPU, RAM, temp).",
+        "ui:widget": "toggle",
+        "ui:group": "Content"
+      },
+      "sparklinePoints": {
+        "type": "number",
+        "title": "Sparkline points",
+        "minimum": 10,
+        "maximum": 120,
+        "ui:widget": "slider",
+        "ui:step": 5,
+        "ui:group": "Content"
+      },
+      "title": {
+        "type": "string",
+        "title": "Custom label",
+        "description": "Leave empty to use the default localized label.",
+        "ui:widget": "text",
+        "ui:placeholder": "(auto)",
+        "ui:group": "Content"
+      },
+      "showLabel": {
+        "type": "boolean",
+        "title": "Show label",
+        "ui:widget": "toggle",
+        "ui:group": "Content"
+      },
+      "language": {
+        "type": "string",
+        "title": "Language",
+        "enum": ["auto", "ru", "en"],
+        "enumLabels": ["Auto (browser)", "Русский", "English"],
+        "ui:widget": "select",
+        "ui:group": "Content"
+      },
+
+      "iconType": {
+        "type": "string",
+        "title": "Icon",
+        "enum": ["none", "builtin", "emoji"],
+        "enumLabels": ["None", "Built-in icon", "Emoji"],
+        "ui:widget": "select",
+        "ui:group": "Appearance"
+      },
+      "builtinIcon": {
+        "type": "string",
+        "title": "Built-in icon",
+        "enum": ["auto", "cpu", "memory", "disk", "thermometer", "fan", "network", "globe", "shield", "lock", "activity", "signal"],
+        "enumLabels": ["Auto (by metric)", "CPU", "Memory", "Disk", "Thermometer", "Fan", "Network", "Globe", "Shield", "Lock", "Activity", "Signal"],
+        "ui:widget": "select",
+        "ui:group": "Appearance",
+        "ui:showWhen": { "field": "iconType", "equals": "builtin" }
+      },
+      "emoji": {
+        "type": "string",
+        "title": "Emoji",
+        "description": "Any emoji, e.g. 🌡️ 🧠 📶 🛡️",
+        "ui:widget": "text",
+        "ui:placeholder": "🌡️",
+        "ui:group": "Appearance",
+        "ui:showWhen": { "field": "iconType", "equals": "emoji" }
+      },
+      "accentColor": {
+        "type": "string",
+        "title": "Accent color",
+        "description": "Used for bars, gauges and icon tint.",
+        "ui:widget": "color",
+        "ui:group": "Appearance"
+      },
+      "fontFamily": {
+        "type": "string",
+        "title": "Font",
+        "enum": ["inherit", "system", "sans", "serif", "mono", "custom"],
+        "enumLabels": ["Inherit from theme", "System UI", "Sans-serif", "Serif", "Monospace", "Custom…"],
+        "ui:widget": "select",
+        "ui:group": "Appearance"
+      },
+      "customFont": {
+        "type": "string",
+        "title": "Custom font family",
+        "ui:widget": "text",
+        "ui:placeholder": "Roboto, sans-serif",
+        "ui:group": "Appearance",
+        "ui:showWhen": { "field": "fontFamily", "equals": "custom" }
+      },
+      "fontSize": {
+        "type": "number",
+        "title": "Font size (px)",
+        "description": "0 = inherit from the theme.",
+        "minimum": 0,
+        "maximum": 96,
+        "ui:widget": "slider",
+        "ui:step": 1,
+        "ui:group": "Appearance"
+      },
+
+      "connectionName": {
+        "type": "string",
+        "title": "Connection name",
+        "description": "Shown for VLESS / SOCKS5 modules. Empty = default.",
+        "ui:widget": "text",
+        "ui:placeholder": "VLESS-Reality",
+        "ui:group": "Proxy"
+      },
+      "showPort": {
+        "type": "boolean",
+        "title": "Show port number",
+        "ui:widget": "toggle",
+        "ui:group": "Proxy"
+      },
+      "showClientCount": {
+        "type": "boolean",
+        "title": "Show active client count",
+        "ui:widget": "toggle",
+        "ui:group": "Proxy"
+      },
+      "showListening": {
+        "type": "boolean",
+        "title": "Show port listening state",
+        "description": "Distinguishes 'service running' from 'port actually open'.",
+        "ui:widget": "toggle",
+        "ui:group": "Proxy"
+      },
+
+      "showMac": {
+        "type": "boolean",
+        "title": "Show MAC address",
+        "ui:widget": "toggle",
+        "ui:group": "Network"
+      },
+      "showIpv6": {
+        "type": "boolean",
+        "title": "Show IPv6 (global)",
+        "ui:widget": "toggle",
+        "ui:group": "Network"
+      },
+
+      "pingTargets": {
+        "type": "string",
+        "title": "Ping targets",
+        "description": "One per line — format: Name | host-or-ip",
+        "ui:widget": "textarea",
+        "ui:placeholder": "Cloudflare | 1.1.1.1\nGoogle | 8.8.8.8",
+        "ui:group": "Ping"
+      },
+      "pingWarnMs": {
+        "type": "number",
+        "title": "Ping warn (ms)",
+        "description": "Up to this value → green.",
+        "minimum": 1,
+        "maximum": 5000,
+        "ui:widget": "number",
+        "ui:group": "Ping"
+      },
+      "pingCritMs": {
+        "type": "number",
+        "title": "Ping critical (ms)",
+        "description": "Above warn → yellow; above critical → red.",
+        "minimum": 1,
+        "maximum": 10000,
+        "ui:widget": "number",
+        "ui:group": "Ping"
+      },
+
+      "refreshMs": {
+        "type": "number",
+        "title": "Refresh interval (ms)",
+        "minimum": 1000,
+        "maximum": 60000,
+        "ui:widget": "slider",
+        "ui:step": 1000,
+        "ui:group": "Advanced"
+      },
+      "warnThreshold": {
+        "type": "number",
+        "title": "Warn threshold override",
+        "description": "For CPU/RAM/Disk (%) or temp (°C). 0 = use built-in default.",
+        "minimum": 0,
+        "maximum": 200,
+        "ui:widget": "number",
+        "ui:group": "Advanced"
+      },
+      "critThreshold": {
+        "type": "number",
+        "title": "Critical threshold override",
+        "description": "0 = use built-in default.",
+        "minimum": 0,
+        "maximum": 200,
+        "ui:widget": "number",
+        "ui:group": "Advanced"
+      },
+      "apiBaseUrl": {
+        "type": "string",
+        "title": "System API URL",
+        "description": "Empty = auto (http://<this-host>:4000).",
+        "ui:widget": "text",
+        "ui:placeholder": "http://192.168.1.50:4000",
+        "ui:group": "Advanced"
+      }
+    }
+  },
+
+  "exports": { "component": "default" },
+
+  "translations": {
+    "en-US": "translations/en-US.json",
+    "ru-RU": "translations/ru-RU.json"
+  },
+
+  "dataRequirements": [],
+  "prefetchUrl": null,
+  "permissions": ["network"]
+}
