@@ -6,7 +6,7 @@ export default defineConfig({
   build: {
     lib: {
       entry:    'src/index.tsx',
-      name:     'PiSystemMonitor',
+      name:     '__HS_PLUGIN__',
       fileName: () => 'bundle.js',
       formats:  ['iife'],
     },
