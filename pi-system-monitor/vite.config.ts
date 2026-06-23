@@ -19,6 +19,9 @@ function hsPluginExport(): Plugin {
 
 export default defineConfig({
   plugins: [react(), hsPluginExport()],
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production'),
+  },
   build: {
     lib: {
       entry:    'src/index.tsx',
