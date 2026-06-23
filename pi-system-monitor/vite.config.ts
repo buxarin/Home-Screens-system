@@ -10,7 +10,7 @@ function hsPluginExport(): Plugin {
     generateBundle(_, bundle) {
       for (const chunk of Object.values(bundle)) {
         if (chunk.type === 'chunk' && chunk.fileName === 'bundle.js') {
-          chunk.code += '\nwindow.__HS_PLUGIN__ = __HS_PLUGIN__;';
+          chunk.code += '\nwindow.__HS_PLUGIN__ = { default: __HS_PLUGIN__, __esModule: true };';
         }
       }
     },
