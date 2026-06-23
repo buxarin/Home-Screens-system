@@ -284,5 +284,6 @@
 
   "dataRequirements": [],
   "prefetchUrl": null,
-  "permissions": ["network"]
+  "permissions": ["network", "localNetwork"],
+  "allowedDomains": ["*"]
 }

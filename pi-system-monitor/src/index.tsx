@@ -62,6 +62,13 @@ interface Snapshot {
   socks5?: { running?: boolean; port?: number; listening?: boolean; client_count?: number };
 }
 
+/* ── SDK fetch wrapper ──────────────────────────────────────────────────── */
+function hsFetch(url: string): Promise<Response> {
+  const sdk = typeof window !== 'undefined' ? (window as any).__HS_SDK__ : null;
+  if (sdk?.pluginFetch) return sdk.pluginFetch('pi-system-monitor', { url, cacheTtlMs: 0 });
+  return fetch(url, { cache: 'no-store' });
+}
+
 /* ── polling hook ───────────────────────────────────────────────────────── */
 function usePoll<T>(url: string | null, refreshMs: number): [T | null, string | null] {
   const [data, setData] = React.useState<T | null>(null);
@@ -70,16 +77,14 @@ function usePoll<T>(url: string | null, refreshMs: number): [T | null, string | 
     if (!url) return;
     let cancelled = false;
     const run = async () => {
-      const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), Math.max(2000, refreshMs - 200));
       try {
-        const r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+        const r = await hsFetch(url);
         if (!r.ok) throw new Error(String(r.status));
         const j = (await r.json()) as T;
         if (!cancelled) { setData(j); setErr(null); }
       } catch (e) {
         if (!cancelled) setErr(String((e as Error)?.message || e));
-      } finally { clearTimeout(to); }
+      }
     };
     run();
     const id = setInterval(run, Math.max(1000, refreshMs));
@@ -110,7 +115,7 @@ function usePings(base: string, targets: { name: string; host: string }[], refre
     const run = async () => {
       const out = await Promise.all(targets.map(async (t) => {
         try {
-          const r = await fetch(`${base}/?ping=${encodeURIComponent(t.host)}`, { cache: 'no-store' });
+          const r = await hsFetch(`${base}/?ping=${encodeURIComponent(t.host)}`);
           const j = await r.json();
           return { host: t.host, name: t.name, ok: !!j.ok, ms: j.ms ?? null } as PingResult;
         } catch { return { host: t.host, name: t.name, ok: false, ms: null } as PingResult; }
