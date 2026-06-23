@@ -1,0 +1,19 @@
+{
+  "name": "home-screens-plugin-pi-system-monitor",
+  "version": "1.1.0",
+  "description": "Raspberry Pi system, network and proxy monitor widget for Home Screens",
+  "license": "MIT",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.0",
+    "vite": "^5.4.21"
+  }
+}
