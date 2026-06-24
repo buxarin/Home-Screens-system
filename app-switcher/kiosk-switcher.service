@@ -1,0 +1,16 @@
+[Unit]
+Description=Kiosk App Switcher (touch → CDP navigator)
+After=network.target home-screens.service
+Wants=home-screens.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/kiosk-switcher.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

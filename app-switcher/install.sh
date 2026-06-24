@@ -6,21 +6,23 @@
 #  Удаление: sudo ./install.sh --uninstall
 #
 #  Что делает:
-#   • Устанавливает nginx (если ещё нет)
-#   • Помещает конфиг kiosk-switcher.conf в /etc/nginx/conf.d/
-#   • Настраивает HA trusted_proxies (разрешает проксирование через nginx)
-#   • Меняет URL запуска киоска на http://localhost:8080 (Home Screens через прокси)
-#   • Перезапускает nginx и home-screens.service
+#   • Устанавливает nginx + python3-evdev + python3-websocket
+#   • Помещает конфиг nginx в /etc/nginx/conf.d/kiosk-switcher.conf
+#   • Устанавливает демон kiosk-switcher.py как systemd-сервис
+#   • Настраивает HA trusted_proxies
+#   • Меняет PORT киоска на 8080 (через port.conf)
 #
 #  После установки:
-#   • Два пальца в правый верхний угол → переключение между приложениями
-#   • Home Screens:   http://localhost:8080
-#   • Home Assistant: http://localhost:8081
+#   • Одно касание правого верхнего угла → переключение между приложениями
+#   • Home Screens:    http://localhost:8080
+#   • Home Assistant:  http://localhost:8081
 # =============================================================================
 set -euo pipefail
 
 CONF_NAME="kiosk-switcher"
 CONF_DST="/etc/nginx/conf.d/${CONF_NAME}.conf"
+SWITCHER_BIN="/usr/local/bin/kiosk-switcher.py"
+SWITCHER_SVC="/etc/systemd/system/kiosk-switcher.service"
 HA_CONFIG_DIR="/opt/homeassistant"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -107,24 +109,53 @@ YAML
 # ── Uninstall ─────────────────────────────────────────────────────────────────
 do_uninstall() {
   step "Удаление App Switcher"
+
+  systemctl stop  kiosk-switcher 2>/dev/null || true
+  systemctl disable kiosk-switcher 2>/dev/null || true
+  rm -f "$SWITCHER_SVC" "$SWITCHER_BIN"
+  systemctl daemon-reload 2>/dev/null || true
+  ok "Демон kiosk-switcher удалён"
+
   rm -f "$CONF_DST"
   nginx -t 2>/dev/null && systemctl reload nginx 2>/dev/null || true
   ok "Конфиг nginx удалён"
 
   local launcher
   launcher="$(find_kiosk_launcher)"
-  # Restore original port.conf
-  local app_dir
-  app_dir="$(dirname "$(dirname "$launcher")")"
-  local port_conf="${app_dir}/data/port.conf"
-  if [ -f "${port_conf}.orig" ]; then
-    mv "${port_conf}.orig" "$port_conf"
-    ok "port.conf восстановлен"
-  elif [ -f "$port_conf" ] && [ "$(cat "$port_conf")" = "8080" ]; then
-    echo "3000" > "$port_conf"
-    ok "port.conf возвращён на 3000"
+  if [ -n "$launcher" ]; then
+    local app_dir port_conf
+    app_dir="$(dirname "$(dirname "$launcher")")"
+    port_conf="${app_dir}/data/port.conf"
+    if [ -f "${port_conf}.orig" ]; then
+      mv "${port_conf}.orig" "$port_conf"
+      ok "port.conf восстановлен"
+    elif [ -f "$port_conf" ] && [ "$(cat "$port_conf")" = "8080" ]; then
+      echo "3000" > "$port_conf"
+      ok "port.conf возвращён на 3000"
+    fi
   fi
   exit 0
+}
+
+# ── Install touch-switcher daemon ─────────────────────────────────────────────
+install_switcher_daemon() {
+  step "Установка зависимостей Python (evdev, websocket)"
+  apt-get install -y python3-evdev python3-websocket 2>/dev/null \
+    || pip3 install evdev websocket-client 2>/dev/null \
+    || warn "Не удалось установить зависимости — установите вручную: sudo apt-get install python3-evdev python3-websocket"
+
+  step "Установка kiosk-switcher.py"
+  [ -f "$SCRIPT_DIR/kiosk-switcher.py" ] || err "kiosk-switcher.py не найден"
+  install -m 0755 "$SCRIPT_DIR/kiosk-switcher.py" "$SWITCHER_BIN"
+  ok "Демон установлен: $SWITCHER_BIN"
+
+  step "Установка systemd сервиса"
+  [ -f "$SCRIPT_DIR/kiosk-switcher.service" ] || err "kiosk-switcher.service не найден"
+  install -m 0644 "$SCRIPT_DIR/kiosk-switcher.service" "$SWITCHER_SVC"
+  systemctl daemon-reload
+  systemctl enable kiosk-switcher
+  systemctl restart kiosk-switcher && ok "kiosk-switcher.service запущен" \
+    || warn "Сервис не запустился — проверьте: journalctl -u kiosk-switcher -n 30"
 }
 
 # ── Main install ──────────────────────────────────────────────────────────────
@@ -163,6 +194,8 @@ do_install() {
 
   step "Обновление kiosk launcher URL"
   patch_kiosk_url
+
+  install_switcher_daemon
 }
 
 main() {
@@ -187,11 +220,14 @@ main() {
   echo "  Home Screens  → http://localhost:8080"
   echo "  Home Assistant → http://localhost:8081"
   echo ""
-  echo "  Двойное касание правого верхнего угла экрана"
+  echo "  Одно касание правого верхнего угла (18% × 14% экрана)"
   echo "  переключает между приложениями."
   echo ""
-  echo "  Если HA показывает ошибку авторизации через прокси,"
-  echo "  перезапустите контейнер: sudo docker restart homeassistant"
+  echo "  Статус демона : sudo systemctl status kiosk-switcher"
+  echo "  Логи          : sudo journalctl -u kiosk-switcher -f"
+  echo ""
+  echo "  Если HA показывает ошибку авторизации через прокси:"
+  echo "    sudo docker restart homeassistant"
   echo ""
 }
 
