@@ -14,7 +14,10 @@
     "latitude": 35.0,
     "longitude": 33.0,
     "refreshMs": 300000,
-    "showLabel": true
+    "showLabel": true,
+    "emoji": "",
+    "numberSize": 100,
+    "numberFont": ""
   },
 
   "defaultSize": { "w": 150, "h": 150 },
@@ -62,6 +65,30 @@
         "ui:widget": "slider",
         "ui:step": 60000,
         "ui:group": "Advanced"
+      },
+      "emoji": {
+        "type": "string",
+        "title": "Custom emoji icon",
+        "description": "Replace the sun SVG with any emoji (e.g. ☀️ 🌤️ 🔆). Leave empty to use the default sun icon.",
+        "ui:widget": "text",
+        "ui:group": "Icon"
+      },
+      "numberSize": {
+        "type": "number",
+        "title": "Number size (%)",
+        "description": "Size of the UV number on the icon. 100 = default, 150 = 50% larger.",
+        "minimum": 20,
+        "maximum": 200,
+        "ui:widget": "slider",
+        "ui:step": 5,
+        "ui:group": "Icon"
+      },
+      "numberFont": {
+        "type": "string",
+        "title": "Number font",
+        "description": "CSS font-family for the UV number (e.g. 'Georgia', 'monospace'). Leave empty for system font.",
+        "ui:widget": "text",
+        "ui:group": "Icon"
       }
     }
   },

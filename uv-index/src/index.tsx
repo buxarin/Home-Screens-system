@@ -33,7 +33,11 @@ function uvLabel(uv: number): string {
   return 'Extreme';
 }
 
-function SunIcon({ uv, color, size }: { uv: number; color: string; size: number }) {
+function SunIcon({
+  uv, color, size, numSize, numFont,
+}: {
+  uv: number; color: string; size: number; numSize: number; numFont: string;
+}) {
   const cx = size / 2;
   const innerR = size * 0.24;
   const rayInner = size * 0.30;
@@ -57,20 +61,53 @@ function SunIcon({ uv, color, size }: { uv: number; color: string; size: number 
         x={cx} y={cx}
         textAnchor="middle" dominantBaseline="central"
         fill="white"
-        fontSize={uv >= 10 ? innerR * 0.9 : innerR * 1.1}
+        fontSize={numSize}
         fontWeight="bold"
-        fontFamily='system-ui, -apple-system, sans-serif'>
+        fontFamily={numFont}>
         {uv}
       </text>
     </svg>
   );
 }
 
+function EmojiIcon({ emoji, size, uv, color, numSize, numFont, showUv }: {
+  emoji: string; size: number; uv: number; color: string;
+  numSize: number; numFont: string; showUv: boolean;
+}) {
+  return (
+    <div style={{ position: 'relative', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ fontSize: size * 0.72, lineHeight: 1, userSelect: 'none' }}>{emoji}</span>
+      {showUv && (
+        <span style={{
+          position: 'absolute', bottom: 0, right: 0,
+          background: color,
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: numSize * 0.85,
+          fontFamily: numFont,
+          borderRadius: '50%',
+          width: size * 0.42,
+          height: size * 0.42,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+        }}>
+          {uv}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function UvIndex({ config, style }: Props) {
-  const lat       = Number(config.latitude  ?? 35.0);
-  const lon       = Number(config.longitude ?? 33.0);
-  const refreshMs = Math.max(60000, Number(config.refreshMs ?? 300000));
-  const showLabel = config.showLabel !== false;
+  const lat        = Number(config.latitude   ?? 35.0);
+  const lon        = Number(config.longitude  ?? 33.0);
+  const refreshMs  = Math.max(60000, Number(config.refreshMs ?? 300000));
+  const showLabel  = config.showLabel !== false;
+  const emoji      = typeof config.emoji === 'string' ? config.emoji.trim() : '';
+  const numSizePct = Math.max(20, Math.min(200, Number(config.numberSize ?? 100)));
+  const numFont    = typeof config.numberFont === 'string' && config.numberFont.trim()
+    ? config.numberFont.trim()
+    : 'system-ui, -apple-system, sans-serif';
 
   const [uv, setUv]           = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -99,6 +136,11 @@ export default function UvIndex({ config, style }: Props) {
   const iconSize = Math.max(56, fs * 3.4);
   const color    = uv != null ? uvColor(uv) : '#6b7280';
 
+  // base number size derived from icon, scaled by user percentage
+  const innerR  = iconSize * 0.24;
+  const baseNum = uv != null && uv >= 10 ? innerR * 0.9 : innerR * 1.1;
+  const numSize = baseNum * (numSizePct / 100);
+
   return (
     <div style={{
       width: '100%', height: '100%', boxSizing: 'border-box',
@@ -118,7 +160,14 @@ export default function UvIndex({ config, style }: Props) {
         <span style={{ opacity: 0.45, fontSize: fs * 0.85 }}>—</span>
       ) : (
         <>
-          <SunIcon uv={uv} color={color} size={iconSize} />
+          {emoji ? (
+            <EmojiIcon
+              emoji={emoji} size={iconSize} uv={uv} color={color}
+              numSize={numSize} numFont={numFont} showUv={true}
+            />
+          ) : (
+            <SunIcon uv={uv} color={color} size={iconSize} numSize={numSize} numFont={numFont} />
+          )}
           {showLabel && (
             <span style={{ fontSize: fs * 0.72, opacity: 0.75, fontWeight: 500 }}>
               {uvLabel(uv)}
