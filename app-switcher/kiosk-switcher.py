@@ -23,8 +23,8 @@ HA_URL   = os.environ.get('HA_URL',   'http://localhost:8081')
 CDP_HOST = os.environ.get('CDP_HOST', 'http://localhost:9222')
 
 # Touch zone — single tap in the top-right corner triggers the switch
-ZONE_X_FRAC = 0.82   # rightmost 18 % of screen width
-ZONE_Y_FRAC = 0.14   # topmost   14 % of screen height
+ZONE_X_FRAC = 0.75   # rightmost 25 % of screen width
+ZONE_Y_FRAC = 0.20   # topmost   20 % of screen height
 COOLDOWN    = 2.5    # minimum seconds between switches
 
 
@@ -105,11 +105,28 @@ def main():
     log.info(f"Home Screens URL   : {HS_URL}")
     log.info(f"Home Assistant URL : {HA_URL}")
 
-    last_switch  = 0.0
-    cur_x = cur_y = 0
-    in_zone      = False
-    # Track which app is currently shown; start on HS (the default kiosk page)
-    showing_ha   = False
+    last_switch    = 0.0
+    cur_x = cur_y  = 0
+    in_zone        = False
+    showing_ha     = False   # internal toggle — no URL check needed
+    mt_tracking_id = -1      # ft5x06 uses ABS_MT_TRACKING_ID, not BTN_TOUCH
+
+    def do_switch():
+        nonlocal in_zone, showing_ha, last_switch
+        in_zone = False
+        now = time.time()
+        if (now - last_switch) < COOLDOWN:
+            log.debug("Cooldown — ignored")
+            return
+        last_switch = now
+        if showing_ha:
+            target    = HS_URL
+            showing_ha = False
+        else:
+            target    = HA_URL
+            showing_ha = True
+        log.info(f"Switch! → {target}")
+        cdp_navigate(target)
 
     for event in dev.read_loop():
         t = event.type
@@ -118,29 +135,24 @@ def main():
             c = event.code
             if   c in (ecodes.ABS_MT_POSITION_X, ecodes.ABS_X): cur_x = event.value
             elif c in (ecodes.ABS_MT_POSITION_Y, ecodes.ABS_Y): cur_y = event.value
+            elif c == ecodes.ABS_MT_TRACKING_ID:
+                prev           = mt_tracking_id
+                mt_tracking_id = event.value
+                if prev < 0 and event.value >= 0:
+                    # Finger down — record whether it started in the switch zone
+                    in_zone = (cur_x > zone_x and cur_y < zone_y)
+                    log.debug(f"MT down  at ({cur_x},{cur_y})  in_zone={in_zone}")
+                elif prev >= 0 and event.value < 0 and in_zone:
+                    # Finger up — was in zone → switch
+                    do_switch()
 
         elif t == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
-            if event.value == 1:   # touch down
+            # Fallback for single-touch / BTN_TOUCH devices
+            if event.value == 1:
                 in_zone = (cur_x > zone_x and cur_y < zone_y)
-                if in_zone:
-                    log.debug(f"Touch in zone at ({cur_x},{cur_y})")
-
-            elif event.value == 0 and in_zone:   # touch up — was in zone
-                in_zone = False
-                now = time.time()
-                if (now - last_switch) < COOLDOWN:
-                    log.debug("Cooldown — ignored")
-                    continue
-                last_switch = now
-                # Toggle: internal state, no URL check needed
-                if showing_ha:
-                    target = HS_URL
-                    showing_ha = False
-                else:
-                    target = HA_URL
-                    showing_ha = True
-                log.info(f"Switch! → {target}")
-                cdp_navigate(target)
+                log.debug(f"BTN down at ({cur_x},{cur_y})  in_zone={in_zone}")
+            elif event.value == 0 and in_zone:
+                do_switch()
 
 
 if __name__ == '__main__':
