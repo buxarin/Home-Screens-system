@@ -104,6 +104,7 @@ export default function UvIndex({ config, style }: Props) {
   const refreshMs  = Math.max(60000, Number(config.refreshMs ?? 300000));
   const showLabel  = config.showLabel !== false;
   const clearSky   = config.clearSky !== false; // default true — matches Yandex/Apple
+  const field      = clearSky ? 'uv_index_clear_sky' : 'uv_index';
   const emoji      = typeof config.emoji === 'string' ? config.emoji.trim() : '';
   const numSizePct = Math.max(20, Math.min(200, Number(config.numberSize ?? 100)));
   const numFont    = typeof config.numberFont === 'string' && config.numberFont.trim()
@@ -115,7 +116,6 @@ export default function UvIndex({ config, style }: Props) {
 
   React.useEffect(() => {
     let cancelled = false;
-    const field = clearSky ? 'uv_index_clear_sky' : 'uv_index';
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=uv_index,uv_index_clear_sky&timezone=auto`;
 
     const run = async () => {
