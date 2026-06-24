@@ -50,27 +50,33 @@ find_kiosk_launcher() {
   find /opt /home -name "kiosk-launcher.sh" 2>/dev/null | head -1
 }
 
-# ── Patch kiosk URL ───────────────────────────────────────────────────────────
+# ── Patch kiosk URL via port.conf ────────────────────────────────────────────
+# kiosk-launcher.sh reads PORT from data/port.conf and opens
+# http://localhost:${PORT}/display  — we point it at our nginx proxy (8080).
 patch_kiosk_url() {
   local launcher
   launcher="$(find_kiosk_launcher)"
 
   if [ -z "$launcher" ]; then
-    warn "kiosk-launcher.sh не найден — измените URL запуска вручную на http://localhost:8080"
+    warn "kiosk-launcher.sh не найден — порт не изменён"
     return
   fi
 
-  info "Kiosk launcher: $launcher"
+  local app_dir
+  app_dir="$(dirname "$(dirname "$launcher")")"
+  local port_conf="${app_dir}/data/port.conf"
 
-  # Replace the URL used to open chromium; support port 3000 or bare hostname
-  if grep -q "localhost:3000\|127\.0\.0\.1:3000" "$launcher"; then
-    sed -i 's|http://localhost:3000|http://localhost:8080|g;
-            s|http://127\.0\.0\.1:3000|http://localhost:8080|g' "$launcher"
-    ok "URL в кiosк-launcher.sh изменён на http://localhost:8080"
-  else
-    warn "Не нашёл 'localhost:3000' в $launcher — проверьте вручную"
-    grep -n "http://" "$launcher" | head -5 || true
+  info "Kiosk launcher: $launcher"
+  info "port.conf: $port_conf"
+
+  # Back up original port if not already done
+  if [ ! -f "${port_conf}.orig" ] && [ -f "$port_conf" ]; then
+    cp "$port_conf" "${port_conf}.orig"
   fi
+
+  echo "8080" > "$port_conf"
+  chown "${REAL_USER}:${REAL_USER}" "$port_conf" 2>/dev/null || true
+  ok "port.conf установлен на 8080 (kiosk будет открывать nginx proxy)"
 }
 
 # ── Patch HA configuration.yaml (trusted_proxies) ────────────────────────────
@@ -107,9 +113,16 @@ do_uninstall() {
 
   local launcher
   launcher="$(find_kiosk_launcher)"
-  if [ -n "$launcher" ] && grep -q "localhost:8080" "$launcher"; then
-    sed -i 's|http://localhost:8080|http://localhost:3000|g' "$launcher"
-    ok "URL в kiosk-launcher.sh возвращён на http://localhost:3000"
+  # Restore original port.conf
+  local app_dir
+  app_dir="$(dirname "$(dirname "$launcher")")"
+  local port_conf="${app_dir}/data/port.conf"
+  if [ -f "${port_conf}.orig" ]; then
+    mv "${port_conf}.orig" "$port_conf"
+    ok "port.conf восстановлен"
+  elif [ -f "$port_conf" ] && [ "$(cat "$port_conf")" = "8080" ]; then
+    echo "3000" > "$port_conf"
+    ok "port.conf возвращён на 3000"
   fi
   exit 0
 }
