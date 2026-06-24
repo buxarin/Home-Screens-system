@@ -16,7 +16,7 @@ function hsPluginExport(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), hsPluginExport()],
+  plugins: [react({ jsxRuntime: 'classic' }), hsPluginExport()],
   define: { 'process.env.NODE_ENV': JSON.stringify('production') },
   build: {
     lib: {
