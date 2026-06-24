@@ -1,0 +1,103 @@
+{
+  "id": "precipitation-map",
+  "name": "Precipitation Map",
+  "version": "1.0.0",
+  "description": "Animated precipitation radar map via RainViewer (no API key required). Shows past ~1h and 2h nowcast forecast. Configurable region and zoom.",
+  "author": "custom",
+  "license": "MIT",
+  "minAppVersion": "0.20.0",
+  "moduleType": "precipitation-map",
+  "category": "Weather & Environment",
+  "icon": "cloud-rain",
+
+  "defaultConfig": {
+    "latitude": 35.0,
+    "longitude": 33.0,
+    "zoom": 7,
+    "tileSize": 256,
+    "animSpeed": 600,
+    "opacity": 0.75,
+    "showAttribution": true,
+    "refreshMs": 600000
+  },
+
+  "defaultSize": { "w": 400, "h": 400 },
+
+  "defaultStyle": {
+    "padding": 0,
+    "fontSize": 13,
+    "backgroundColor": "rgba(0,0,0,0)",
+    "borderRadius": 14
+  },
+
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "latitude": {
+        "type": "number",
+        "title": "Center latitude",
+        "minimum": -85,
+        "maximum": 85,
+        "ui:widget": "number",
+        "ui:group": "Map"
+      },
+      "longitude": {
+        "type": "number",
+        "title": "Center longitude",
+        "minimum": -180,
+        "maximum": 180,
+        "ui:widget": "number",
+        "ui:group": "Map"
+      },
+      "zoom": {
+        "type": "number",
+        "title": "Zoom level",
+        "description": "5 = continent, 7 = large region (default), 9 = city area.",
+        "minimum": 4,
+        "maximum": 10,
+        "ui:widget": "slider",
+        "ui:step": 1,
+        "ui:group": "Map"
+      },
+      "opacity": {
+        "type": "number",
+        "title": "Radar overlay opacity",
+        "minimum": 0.2,
+        "maximum": 1.0,
+        "ui:widget": "slider",
+        "ui:step": 0.05,
+        "ui:group": "Map"
+      },
+      "animSpeed": {
+        "type": "number",
+        "title": "Animation speed (ms per frame)",
+        "minimum": 200,
+        "maximum": 2000,
+        "ui:widget": "slider",
+        "ui:step": 100,
+        "ui:group": "Animation"
+      },
+      "showAttribution": {
+        "type": "boolean",
+        "title": "Show attribution",
+        "description": "Show RainViewer / OSM attribution (recommended).",
+        "ui:widget": "toggle",
+        "ui:group": "Display"
+      },
+      "refreshMs": {
+        "type": "number",
+        "title": "Reload frames every (ms)",
+        "description": "How often to reload the frame list from RainViewer.",
+        "minimum": 300000,
+        "maximum": 3600000,
+        "ui:widget": "slider",
+        "ui:step": 60000,
+        "ui:group": "Advanced"
+      }
+    }
+  },
+
+  "exports": { "component": "default" },
+  "permissions": ["network"],
+  "allowedDomains": ["api.rainviewer.com"]
+}

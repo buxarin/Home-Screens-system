@@ -1,0 +1,72 @@
+{
+  "id": "uv-index",
+  "name": "UV Index",
+  "version": "1.0.0",
+  "description": "Current UV index from Open-Meteo (no API key required). Sun icon color-coded: green 0–3, yellow 4–7, red 8–13.",
+  "author": "custom",
+  "license": "MIT",
+  "minAppVersion": "0.20.0",
+  "moduleType": "uv-index",
+  "category": "Weather & Environment",
+  "icon": "sun",
+
+  "defaultConfig": {
+    "latitude": 35.0,
+    "longitude": 33.0,
+    "refreshMs": 300000,
+    "showLabel": true
+  },
+
+  "defaultSize": { "w": 150, "h": 150 },
+
+  "defaultStyle": {
+    "padding": 12,
+    "fontSize": 18,
+    "backgroundColor": "rgba(0,0,0,0.4)",
+    "borderRadius": 14
+  },
+
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "latitude": {
+        "type": "number",
+        "title": "Latitude",
+        "description": "Location latitude (e.g. 35.0 for Cyprus).",
+        "minimum": -90,
+        "maximum": 90,
+        "ui:widget": "number",
+        "ui:group": "Location"
+      },
+      "longitude": {
+        "type": "number",
+        "title": "Longitude",
+        "description": "Location longitude (e.g. 33.0 for Cyprus).",
+        "minimum": -180,
+        "maximum": 180,
+        "ui:widget": "number",
+        "ui:group": "Location"
+      },
+      "showLabel": {
+        "type": "boolean",
+        "title": "Show label",
+        "description": "Show level label below icon (Low / Moderate / High / etc.).",
+        "ui:widget": "toggle",
+        "ui:group": "Display"
+      },
+      "refreshMs": {
+        "type": "number",
+        "title": "Refresh interval (ms)",
+        "minimum": 60000,
+        "maximum": 3600000,
+        "ui:widget": "slider",
+        "ui:step": 60000,
+        "ui:group": "Advanced"
+      }
+    }
+  },
+
+  "exports": { "component": "default" },
+  "permissions": ["network"],
+  "allowedDomains": ["api.open-meteo.com"]
+}
