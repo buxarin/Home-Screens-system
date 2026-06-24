@@ -15,6 +15,7 @@
     "longitude": 33.0,
     "refreshMs": 300000,
     "showLabel": true,
+    "clearSky": true,
     "emoji": "",
     "numberSize": 100,
     "numberFont": ""
@@ -54,6 +55,13 @@
         "type": "boolean",
         "title": "Show label",
         "description": "Show level label below icon (Low / Moderate / High / etc.).",
+        "ui:widget": "toggle",
+        "ui:group": "Display"
+      },
+      "clearSky": {
+        "type": "boolean",
+        "title": "Clear-sky UV (recommended)",
+        "description": "Show UV index without cloud correction — matches Yandex, Apple Weather and most weather apps. Disable to see cloud-adjusted UV from Open-Meteo.",
         "ui:widget": "toggle",
         "ui:group": "Display"
       },

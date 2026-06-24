@@ -103,6 +103,7 @@ export default function UvIndex({ config, style }: Props) {
   const lon        = Number(config.longitude  ?? 33.0);
   const refreshMs  = Math.max(60000, Number(config.refreshMs ?? 300000));
   const showLabel  = config.showLabel !== false;
+  const clearSky   = config.clearSky !== false; // default true — matches Yandex/Apple
   const emoji      = typeof config.emoji === 'string' ? config.emoji.trim() : '';
   const numSizePct = Math.max(20, Math.min(200, Number(config.numberSize ?? 100)));
   const numFont    = typeof config.numberFont === 'string' && config.numberFont.trim()
@@ -114,13 +115,14 @@ export default function UvIndex({ config, style }: Props) {
 
   React.useEffect(() => {
     let cancelled = false;
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=uv_index&timezone=auto`;
+    const field = clearSky ? 'uv_index_clear_sky' : 'uv_index';
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=uv_index,uv_index_clear_sky&timezone=auto`;
 
     const run = async () => {
       try {
         const r = await hsFetch(url, 60000);
         const j = await r.json();
-        const val = j?.current?.uv_index;
+        const val = j?.current?.[field];
         if (!cancelled && val != null) { setUv(Math.round(val)); setLoading(false); }
       } catch {
         if (!cancelled) setLoading(false);
@@ -130,7 +132,7 @@ export default function UvIndex({ config, style }: Props) {
     run();
     const id = setInterval(run, refreshMs);
     return () => { cancelled = true; clearInterval(id); };
-  }, [lat, lon, refreshMs]);
+  }, [lat, lon, refreshMs, clearSky, field]);
 
   const fs       = style.fontSize;
   const iconSize = Math.max(56, fs * 3.4);
