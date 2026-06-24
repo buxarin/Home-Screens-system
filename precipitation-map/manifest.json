@@ -13,7 +13,7 @@
   "defaultConfig": {
     "latitude": 35.0,
     "longitude": 33.0,
-    "zoom": 7,
+    "zoom": 6,
     "tileSize": 256,
     "animSpeed": 600,
     "opacity": 0.75,
@@ -52,9 +52,9 @@
       "zoom": {
         "type": "number",
         "title": "Zoom level",
-        "description": "5 = continent, 7 = large region (default), 9 = city area.",
-        "minimum": 4,
-        "maximum": 10,
+        "description": "1 = world, 3 = large country, 5 = region, 6 = city area. Max 6 — RainViewer free API limit.",
+        "minimum": 1,
+        "maximum": 6,
         "ui:widget": "slider",
         "ui:step": 1,
         "ui:group": "Map"

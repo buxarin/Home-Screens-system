@@ -50,7 +50,7 @@ function frameLabel(ts: number, isForecast: boolean): string {
 export default function PrecipitationMap({ config, style }: Props) {
   const lat        = Number(config.latitude  ?? 35.0);
   const lon        = Number(config.longitude ?? 33.0);
-  const zoom       = Math.max(4, Math.min(10, Number(config.zoom ?? 7)));
+  const zoom       = Math.max(1, Math.min(6, Number(config.zoom ?? 6)));
   const radarOpacity  = Number(config.opacity  ?? 0.75);
   const animSpeed  = Math.max(200, Number(config.animSpeed ?? 600));
   const refreshMs  = Math.max(300000, Number(config.refreshMs ?? 600000));
