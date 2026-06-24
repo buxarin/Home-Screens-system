@@ -75,15 +75,6 @@ def _cdp_page_ws():
     return page['webSocketDebuggerUrl'] if page else None
 
 
-def cdp_current_url():
-    try:
-        data = json.loads(urllib.request.urlopen(f'{CDP_HOST}/json', timeout=3).read())
-        page = next((t for t in data if t.get('type') == 'page'), None)
-        return page.get('url', '') if page else ''
-    except Exception:
-        return ''
-
-
 def cdp_navigate(url):
     try:
         ws_url = _cdp_page_ws()
@@ -117,6 +108,8 @@ def main():
     last_switch  = 0.0
     cur_x = cur_y = 0
     in_zone      = False
+    # Track which app is currently shown; start on HS (the default kiosk page)
+    showing_ha   = False
 
     for event in dev.read_loop():
         t = event.type
@@ -139,13 +132,14 @@ def main():
                     log.debug("Cooldown — ignored")
                     continue
                 last_switch = now
-                cur_url = cdp_current_url()
-                # Switch: if showing HS (port 8080/3000) go to HA, otherwise go to HS
-                if '8081' in cur_url or 'assistant' in cur_url.lower():
+                # Toggle: internal state, no URL check needed
+                if showing_ha:
                     target = HS_URL
+                    showing_ha = False
                 else:
                     target = HA_URL
-                log.info(f"Switch!  ({cur_url}) → {target}")
+                    showing_ha = True
+                log.info(f"Switch! → {target}")
                 cdp_navigate(target)
 
 

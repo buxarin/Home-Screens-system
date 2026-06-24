@@ -85,25 +85,48 @@ patch_kiosk_url() {
 patch_ha_config() {
   local ha_cfg="${HA_CONFIG_DIR}/configuration.yaml"
   if [ ! -f "$ha_cfg" ]; then
-    warn "HA configuration.yaml не найден ($ha_cfg) — пропускаем настройку trusted_proxies"
+    warn "HA configuration.yaml не найден ($ha_cfg) — пропускаем настройку"
     return
   fi
 
-  if grep -q "trusted_proxies" "$ha_cfg"; then
-    info "trusted_proxies уже настроен в HA"
-    return
-  fi
+  # Proxy trust (needed for correct IP forwarding)
+  if ! grep -q "trusted_proxies" "$ha_cfg"; then
+    cat >> "$ha_cfg" <<'YAML'
 
-  cat >> "$ha_cfg" <<'YAML'
-
-# Allow nginx reverse proxy (app-switcher)
+# nginx reverse proxy (app-switcher)
 http:
   use_x_forwarded_for: true
   trusted_proxies:
     - 127.0.0.1
 YAML
-  ok "HA trusted_proxies добавлен в $ha_cfg"
-  info "Перезапустите Home Assistant: sudo docker restart homeassistant"
+    ok "HA trusted_proxies добавлен"
+  else
+    info "trusted_proxies уже настроен"
+  fi
+
+  # Auto-login from local network (kiosk — no keyboard available)
+  if ! grep -q "trusted_networks" "$ha_cfg"; then
+    cat >> "$ha_cfg" <<'YAML'
+
+# Auto-login for kiosk (no keyboard): anyone on local network logs in automatically
+homeassistant:
+  auth_providers:
+    - type: trusted_networks
+      trusted_networks:
+        - 127.0.0.1
+        - 192.168.0.0/16
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+      allow_bypass_login: true
+    - type: homeassistant
+YAML
+    ok "HA trusted_networks (авто-логин) добавлен"
+    warn "Перезапустите HA: sudo docker restart homeassistant"
+    warn "ВАЖНО: сначала завершите онбординг HA с другого устройства (телефон/ноутбук)"
+    warn "  Откройте: http://$(hostname -I | awk '{print $1}'):8081"
+  else
+    info "trusted_networks уже настроен"
+  fi
 }
 
 # ── Uninstall ─────────────────────────────────────────────────────────────────
