@@ -131,8 +131,8 @@ main() {
   echo -e "${GREEN}  Precipitation Map v${PLUGIN_VERSION} установлен${NC}"
   echo -e "${GREEN}═══════════════════════════════════════${NC}"
   echo "  Откройте редактор → палитра → «Weather & Environment» → «Precipitation Map»"
-  echo "  Настройте центр карты (широта/долгота) и зум.
-  Данные радара обновляются каждые 10 мин (RainViewer).
+  echo "  Настройте центр карты (широта/долгота) и зум."
+  echo "  Данные радара обновляются каждые 10 мин (RainViewer)."
   echo ""
 }
 
