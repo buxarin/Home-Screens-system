@@ -73,9 +73,24 @@ resolve_paths() {
   id "$REAL_USER" &>/dev/null || err "Пользователь '$REAL_USER' не найден (укажите REAL_USER=...)."
   REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
   [ -n "$REAL_HOME" ] || REAL_HOME="/home/$REAL_USER"
-  HS_DIR="${HS_DIR:-$REAL_HOME/home-screens}"
-  API_PY="$REAL_HOME/system-api-server.py"
   PYTHON3_BIN="$(command -v python3 2>/dev/null || echo /usr/bin/python3)"
+  API_PY="$REAL_HOME/system-api-server.py"
+
+  # Auto-detect Home Screens directory if not specified
+  if [ -z "${HS_DIR:-}" ]; then
+    for candidate in \
+        "/opt/home-screens/current" \
+        "$REAL_HOME/home-screens" \
+        "/opt/home-screens" \
+        "/home/pi/home-screens"; do
+      if [ -d "$candidate/data/plugins" ] || [ -f "$candidate/package.json" ]; then
+        HS_DIR="$candidate"
+        info "Home Screens найден: $HS_DIR"
+        break
+      fi
+    done
+    HS_DIR="${HS_DIR:-$REAL_HOME/home-screens}"
+  fi
 
   # Determine Home Screens data directory
   if   [ -d "$HS_DIR/data/plugins" ]; then HS_DATA="$HS_DIR/data"
