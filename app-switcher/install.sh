@@ -79,6 +79,16 @@ patch_kiosk_url() {
   echo "8080" > "$port_conf"
   chown "${REAL_USER}:${REAL_USER}" "$port_conf" 2>/dev/null || true
   ok "port.conf установлен на 8080 (kiosk будет открывать nginx proxy)"
+
+  # Add --remote-allow-origins=http://localhost so CDP WebSocket connections
+  # from kiosk-switcher.py are accepted by Chromium.
+  if ! grep -q "remote-allow-origins" "$launcher"; then
+    sed -i 's/--remote-debugging-port=9222/--remote-debugging-port=9222 \\\n  --remote-allow-origins=http:\/\/localhost/' "$launcher"
+    ok "Chromium флаг --remote-allow-origins добавлен в $launcher"
+    warn "Для применения флага нужна перезагрузка киоска (sudo reboot)"
+  else
+    info "--remote-allow-origins уже есть в $launcher"
+  fi
 }
 
 # ── Patch HA configuration.yaml (trusted_proxies) ────────────────────────────
