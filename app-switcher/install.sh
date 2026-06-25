@@ -83,7 +83,7 @@ patch_kiosk_url() {
   # Add --remote-allow-origins=http://localhost so CDP WebSocket connections
   # from kiosk-switcher.py are accepted by Chromium.
   if ! grep -q "remote-allow-origins" "$launcher"; then
-    sed -i 's/--remote-debugging-port=9222/--remote-debugging-port=9222 \\\n  --remote-allow-origins=http:\/\/localhost/' "$launcher"
+    sed -i 's/--remote-debugging-port=9222/--remote-debugging-port=9222 \\\n  --remote-allow-origins=*/' "$launcher"
     ok "Chromium флаг --remote-allow-origins добавлен в $launcher"
     warn "Для применения флага нужна перезагрузка киоска (sudo reboot)"
   else
