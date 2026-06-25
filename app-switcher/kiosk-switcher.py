@@ -81,7 +81,8 @@ def cdp_navigate(url):
         if not ws_url:
             log.warning("CDP: no page tab found")
             return
-        ws = websocket.create_connection(ws_url, timeout=4)
+        # origin must match what Chromium trusts; 'http://localhost' is accepted
+        ws = websocket.create_connection(ws_url, timeout=4, origin="http://localhost")
         ws.send(json.dumps({"id": 1, "method": "Page.navigate", "params": {"url": url}}))
         ws.recv()
         ws.close()
